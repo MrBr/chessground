@@ -36,6 +36,7 @@ export interface Drawable {
   enabled: boolean; // can draw
   visible: boolean; // can view
   eraseOnClick: boolean;
+  validate?: (newDrawShape: DrawCurrent, curDrawShape?: DrawCurrent) => boolean;
   onChange?: (shapes: DrawShape[]) => void;
   shapes: DrawShape[]; // user shapes
   autoShapes: DrawShape[]; // computer shapes
@@ -66,31 +67,46 @@ export function start(state: State, e: cg.MouchEvent): void {
   const pos = eventPosition(e) as cg.NumberPair,
   orig = getKeyAtDomPos(pos, whitePov(state), state.dom.bounds());
   if (!orig) return;
-  state.drawable.current = {
+  const drawShape = {
     orig,
     pos,
     brush: eventBrush(e)
   };
+  if (!validate(state, drawShape)) {
+    return;
+  }
+  state.drawable.current = drawShape;
   processDraw(state);
 }
 
 export function processDraw(state: State): void {
   requestAnimationFrame(() => {
     const cur = state.drawable.current;
-    if (cur) {
-      const mouseSq = getKeyAtDomPos(cur.pos, whitePov(state), state.dom.bounds());
-      if (mouseSq !== cur.mouseSq) {
-        cur.mouseSq = mouseSq;
-        cur.dest = mouseSq !== cur.orig ? mouseSq : undefined;
-        state.dom.redrawNow();
-      }
-      processDraw(state);
+    if (!cur) {
+      return;
     }
+    const mouseSq = getKeyAtDomPos(cur.pos, whitePov(state), state.dom.bounds());
+    const dest = mouseSq !== cur.orig ? mouseSq : undefined;
+    const isValid = mouseSq !== cur.mouseSq &&  validate(state,{
+      ...cur,
+      mouseSq,
+      dest
+    }, cur);
+    if (isValid) {
+      cur.mouseSq = mouseSq;
+      cur.dest = mouseSq !== cur.orig ? mouseSq : undefined;
+      state.dom.redrawNow();
+    }
+    processDraw(state);
   });
 }
 
 export function move(state: State, e: cg.MouchEvent): void {
   if (state.drawable.current) state.drawable.current.pos = eventPosition(e) as cg.NumberPair;
+}
+
+export function validate(state: State, newDrawShape: DrawCurrent, curDrawShape?: DrawCurrent): boolean {
+  return state.drawable.validate ? state.drawable.validate(newDrawShape, curDrawShape) : true;
 }
 
 export function end(state: State): void {

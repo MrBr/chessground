@@ -1,7 +1,7 @@
 import { State } from './state'
 import { setCheck, setSelected } from './board'
 import { read as fenRead } from './fen'
-import { DrawShape, DrawBrush } from './draw'
+import {DrawShape, DrawBrush, DrawCurrent} from './draw'
 import * as cg from './types'
 
 export interface Config {
@@ -79,6 +79,8 @@ export interface Config {
   };
   drawable?: {
     enabled?: boolean; // can draw
+    // called before drawing & updating a shape.
+    validate?: (newDrawShape: DrawCurrent, curDrawShape: DrawCurrent) => boolean;
     visible?: boolean; // can view
     eraseOnClick?: boolean;
     shapes?: DrawShape[];
