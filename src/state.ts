@@ -37,6 +37,7 @@ export interface State {
       after?: (orig: cg.Key, dest: cg.Key, metadata: cg.MoveMetadata) => void; // called after the move has been played
       afterNewPiece?: (role: cg.Role, key: cg.Key, metadata: cg.MoveMetadata) => void; // called after a new piece is dropped on the board
     };
+    validate?: (orig: cg.Key, dest: cg.Key) => boolean;
     rookCastle: boolean // castle by moving the king to the rook
   };
   premovable: {
